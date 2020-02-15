@@ -1,70 +1,61 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { generateId } from './utils';
 import './App.css';
 
 function App() {
 
-  const [ name, setName ] = useState("");
-  const [ address, setAddress ] = useState("");
-  const [ phone, setPhone ] = useState("");
-
   const dummyData = [
     {
-      name: "userName", inputType: "text", value: "Adam",
+      id: generateId(), name: "userName", inputType: "text", value: "Adam",
       children: [
-        { name: "address", inputType: "textArea", value: "A2B"},
-        { name: "phone", inputType: "text", value: ""}
+        { 
+          id: generateId(), name: "address", inputType: "textArea", value: "USA",
+          children: [
+            { id: generateId(), name: "address", inputType: "textArea", value: ""},
+            { 
+              id: generateId(), name: "userName", inputType: "text", value: "Raj",
+              children: [
+                { id: generateId(), name: "address", inputType: "textArea", value: "INDIA"},
+                { id: generateId(), name: "phone", inputType: "text", value: "A4B"}
+              ]
+            }
+          ]
+        },
+        { id: generateId(), name: "phone", inputType: "text", value: ""}
       ]
     },
-    // {
-    //   name: "userName", inputType: "text", value: "Adam",
-    //   children: [
-    //     { name: "address", inputType: "textArea", value: ""},
-    //     { name: "phone", inputType: "text", value: ""}
-    //   ]
-    // }
-  ]
-
-  const handleSubmit = (e, data, index) => {
-    e.preventDefault()
-    
-    let newObj, newName, newAddress, newPhone;
-
-    if (!!name) newName = name;
-    else newName = data.value;
-    if (!!address) newAddress = address;
-    else newAddress = data.children[0].value;
-    if (!!phone) newPhone = phone;
-    else newPhone = data.children[1].value;
-
-    newObj = {
-      name: "userName", inputType: "text", value: newName,
+    {
+      id: generateId(), name: "userName", inputType: "text", value: "Adam",
       children: [
-        { name: "address", inputType: "textArea", value: newAddress },
-        { name: "phone", inputType: "text", value: newPhone }
+        { id: generateId(), name: "address", inputType: "textArea", value: ""},
+        { id: generateId(), name: "phone", inputType: "text", value: ""}
       ]
     }
+  ];
 
-    dummyData.splice(index, 1, newObj)
+  const newArray = [];
 
-    setName("")
-    setAddress("")
-    setPhone("")
-
-    console.log(dummyData);
+  const handleChange = (data, id, updatedValue) => {
+    data.forEach(item => {
+      if (typeof(item) === "object" && !!item) {
+        for (let key in item) {
+          if (Array.isArray(item[key])) handleChange(item[key], id, updatedValue)
+          else if(item[key] === id) item.value = updatedValue;
+        }
+      }
+    })
   }
 
   const handleInputTypes = (data) => {
-    let { inputType, name, value } = data;
+    let { id, inputType, name, value } = data;
 
     if (inputType === "text") {
       return (
         <input 
+          name={name}
           type="text"
           defaultValue={!!value ? value : ""}
-          onChange={(e) => {
-            if (name === "userName") setName(e.target.value)
-            else setPhone(e.target.value)
-          }}
+          onChange={(e) => handleChange(dummyData, id, e.target.value)}
         />
       )
     }
@@ -72,48 +63,57 @@ function App() {
     if (inputType === "textArea") {
       return (
         <textarea
+          name={name}
           defaultValue={!!value ? value : ""}
-          onChange={(e) => setAddress(e.target.value)}
+          onChange={(e) => handleChange(dummyData, id, e.target.value)}
         >
         </textarea>
       )
     }
   }
 
-  return (
-    dummyData.map((item, i) => {
-      return (
-        <form 
-          key={i}
-          className="App"
-          onSubmit={(e) => handleSubmit(e, item, i)}
-          >
-          <section>
-            <div className="ptag">
-              <p>{item.name}</p>
-            </div>
-            <div className="input_div">
-              {handleInputTypes(item)}
-            </div>
-          </section>
-          {
-            item.children.map((child, k) => {
-              return (
-                <section key={k}>
-                  <div className="ptag">
-                    <p>{child.name}</p>
-                  </div>
-                  {handleInputTypes(child)}
-                </section>
-              )
-            })
-          }
-          <div className="submit-div">
-            <input type="submit" value="Submit" className="submit" />
-          </div>
-        </form>
-      )
+  const handleData = (data) => {
+    data.forEach(item => {
+      if (typeof(item) === "object" && !!item) {
+        for (let key in item) {
+          if (Array.isArray(item[key])) handleData(item[key])
+          else if (!newArray.includes(item)) newArray.push(item)
+        }
+      }
     })
+
+    return (
+      <form 
+        className="App"
+        onSubmit={(e) => {
+          e.preventDefault()
+          // console.log(dummyData) // uncomment to see change in the JSON data structure given in PDF.
+          console.log(newArray);
+        }}
+        >
+        {
+          newArray.map((child, k) => {
+            return (
+              <section key={k}>
+                <div className="ptag">
+                  <p>{child.name}</p>
+                </div>
+                {handleInputTypes(child)}
+              </section>
+            )
+          })
+        }
+        <div className="submit-div">
+          <input type="submit" value="Submit" className="submit" />
+        </div>
+      </form>
+    )
+  }
+
+  return (
+    <div>
+      {handleData(dummyData)}
+    </div>
   )
 }
 
